@@ -5,5 +5,8 @@
   "background": {
     "service_worker": "dist/background.js"
   },
-  "permissions": []
+  "permissions": [],
+  "action": {
+    "default_popup": "src/popup/popup.html"
+  }
 }
