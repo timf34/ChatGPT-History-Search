@@ -1,11 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Hello World TypeScript Extension",
+  "name": "ChatGPT Hisotry Search",
   "version": "1.0",
+  "description": "Indexes ChatGPT conversations for easy search and retrieval.",
+  "permissions": ["storage", "<all_urls>"],
   "background": {
     "service_worker": "dist/background.js"
   },
-  "permissions": [],
+  "content_scripts": [
+    {
+      "matches": ["https://chat.openai.com/*"],
+      "js": ["dist/content.js"]
+    }
+  ],
   "action": {
     "default_popup": "src/popup/popup.html"
   }
