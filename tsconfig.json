@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
+    "outDir": "./dist",
     "sourceMap": true,
     "strict": true,
     "noImplicitAny": true,
     "module": "es6",
     "target": "es6",
     "moduleResolution": "node",
-    "allowJs": true
+    "jsx": "react",
+    "allowJs": true,
+    "types": ["chrome"],
+    "lib": ["es2018", "dom"] // Add this line
   },
   "include": ["src/**/*"]
 }
