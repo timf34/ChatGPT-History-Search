@@ -3,14 +3,18 @@
   "name": "ChatGPT Hisotry Search",
   "version": "1.0",
   "description": "Indexes ChatGPT conversations for easy search and retrieval.",
-  "permissions": ["storage", "<all_urls>"],
+  "permissions": [
+    "tabs",
+    "storage",
+    "activeTab"
+  ],
   "background": {
-    "service_worker": "dist/background.js"
+    "service_worker": "dist/background/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://chat.openai.com/*"],
-      "js": ["dist/content.js"]
+      "js": ["dist/content/content.js"]
     }
   ],
   "action": {
