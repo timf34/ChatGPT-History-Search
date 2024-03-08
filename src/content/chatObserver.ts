@@ -1,28 +1,52 @@
+console.log("Content script loaded");
+
 const observer = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
-        if (mutation.addedNodes.length) {
-            mutation.addedNodes.forEach((node: any) => {
-                // Check if the node is a conversation turn
-                if (node.nodeType === 1 && node.matches('[data-message-id]')) { // Adjust this selector based on precise criteria
-                    handleMessageNode(node);
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach((node: Node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const element = node as Element;
+                    if (element.matches('[data-message-id]')) {
+                        handleMessageNode(element);
+                    }
                 }
             });
         }
     });
 });
 
-// Start observing
-const targetNode = document.querySelector('div.flex.flex-col.text-sm.pb-9');
-if (targetNode) {
-    observer.observe(targetNode, { childList: true, subtree: true });
+// Function to start observing the target node
+function startObserving() {
+    const targetNode = document.querySelector('div.flex.flex-col.text-sm.pb-9');
+    if (targetNode) {
+        console.log("Target node found");
+        observer.observe(targetNode, { childList: true, subtree: true });
+    } else {
+        console.warn("Target node not found. Retrying in 1 second...");
+        setTimeout(startObserving, 1000);
+    }
 }
+
+// Start observing the target node
+startObserving();
 
 function handleMessageNode(node: Element) {
     const authorRole = node.getAttribute('data-message-author-role');
     const messageId = node.getAttribute('data-message-id');
-    const messageContent = node.querySelector('div.markdown, div.text-message > div')?.innerHTML.trim(); // Adjust based on structure
 
-    // You might want to structure this data differently depending on your storage solution
+    let messageContent = '';
+    if (authorRole === 'user') {
+        const userMessageElement = node.querySelector('div');
+        if (userMessageElement) {
+            messageContent = userMessageElement.textContent?.trim() || '';
+        }
+    } else if (authorRole === 'assistant') {
+        const assistantMessageElement = node.querySelector('div.markdown');
+        if (assistantMessageElement) {
+            messageContent = assistantMessageElement.innerHTML?.trim() || '';
+        }
+    }
+
     const messageData = {
         id: messageId,
         role: authorRole,
@@ -31,5 +55,3 @@ function handleMessageNode(node: Element) {
 
     console.log(messageData);
 }
-
-console.log("Content script loaded");
