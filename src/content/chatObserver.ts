@@ -6,8 +6,8 @@ const observer = new MutationObserver(mutations => {
             mutation.addedNodes.forEach((node: Node) => {
                 if (node.nodeType === Node.ELEMENT_NODE) {
                     const element = node as Element;
-                    if (element.matches('[data-message-id]')) {
-                        handleMessageNode(element);
+                    if (element.matches('[data-testid^="conversation-turn-"]')) {
+                        handleConversationTurn(element);
                     }
                 }
             });
@@ -29,6 +29,13 @@ function startObserving() {
 
 // Start observing the target node
 startObserving();
+
+function handleConversationTurn(turnElement: Element) {
+    const messageElements = turnElement.querySelectorAll('[data-message-id]');
+    messageElements.forEach(messageElement => {
+        handleMessageNode(messageElement);
+    });
+}
 
 function handleMessageNode(node: Element) {
     const authorRole = node.getAttribute('data-message-author-role');
