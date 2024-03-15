@@ -44,10 +44,19 @@ function handleMessageNode(node: Element) {
     const authorRole = node.getAttribute('data-message-author-role');
     const messageId = node.getAttribute('data-message-id');
     if (authorRole === 'assistant') {
-        // Wait for the streaming to finish for the assistant's response.
-        waitForStreamingToEnd(node).then((content) => {
-            logMessageData(messageId, authorRole, content);
-        });
+        setTimeout(() => {
+            const innerDiv = node.querySelector('div');
+            console.log('Node:', node);
+            console.log('Inner div:', innerDiv);
+            if (innerDiv) {
+                // Wait for the streaming to finish for the assistant's response.
+                waitForStreamingToEnd(innerDiv).then((content) => {
+                    logMessageData(messageId, authorRole, content);
+                });
+            } else {
+                console.warn('Inner div not found for assistant message:', node);
+            }
+        }, 1000);
     } else {
         // Handle user messages immediately.
         const messageContent = node.querySelector('div')?.textContent?.trim() || '';
