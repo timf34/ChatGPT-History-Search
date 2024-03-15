@@ -1,3 +1,6 @@
+import ChatGPTHistoryDB from '../database/database';
+
+
 console.log("Content script loaded");
 
 interface ElementWithMatch extends Element {
