@@ -1,11 +1,9 @@
 console.log("Content script loaded");
 
-// Define a more specific type for the node that may be observed.
 interface ElementWithMatch extends Element {
     matches(selector: string): boolean;
 }
 
-// Creates an observer instance that looks for new conversation turns (i.e. chat responses from the user or assistant).
 const observer = new MutationObserver((mutations: MutationRecord[]) => {
     mutations.forEach((mutation: MutationRecord) => {
         if (mutation.type === 'childList') {
@@ -21,7 +19,6 @@ const observer = new MutationObserver((mutations: MutationRecord[]) => {
     });
 });
 
-// Observes the target node for changes.
 function startObserving() {
     const targetNode = document.querySelector('div.flex.flex-col.text-sm.pb-9');
     if (targetNode) {
@@ -33,10 +30,8 @@ function startObserving() {
     }
 }
 
-// Start observing the target node.
 startObserving();
 
-// Handles conversation turn elements by processing message elements within them.
 function handleConversationTurn(turnElement: Element) {
     const messageElements = turnElement.querySelectorAll('[data-message-id]');
     messageElements.forEach((messageElement: Element) => {
@@ -44,58 +39,55 @@ function handleConversationTurn(turnElement: Element) {
     });
 }
 
-// Processes each message node to log its details.
+// Modified to handle the assistant's response streaming.
 function handleMessageNode(node: Element) {
     const authorRole = node.getAttribute('data-message-author-role');
     const messageId = node.getAttribute('data-message-id');
-
-    // Determines the content based on the author's role.
-    const messageContent = getMessageContent(node, authorRole);
-
-    logMessageData(messageId, authorRole, messageContent);
-}
-
-// Target node: <div class="result-streaming markdown prose w-full break-words dark:prose-invert light">
-// assistantTargetNode = document.querySelector('div.result-streaming.markdown.prose.w-full.break-words.dark\:prose-invert.light');
-const assistantTargetNode = document.querySelector('div.markdown');
-if (!assistantTargetNode) {
-    console.warn("Assistant target node not found.");
-}
-
-const assistantConfig = { attributes: true, childList: false, subtree: false };
-
-function assistantCallback(mutationsList: MutationRecord[], observer: MutationObserver) {
-    // Check if the target node contains "result-streaming" class, if it does wait until it doesn't
-    for (let mutation of mutationsList) {
-        if (mutation.type === 'attributes') {
-            if (assistantTargetNode) {
-                console.log(assistantTargetNode.classList);
-                if (assistantTargetNode.classList.contains('result-streaming')) {
-                    console.log("Assistant is typing...");
-                } else {
-                    console.log("Assistant has stopped typing");
-                    logMessageData(null, 'assistant', assistantTargetNode.innerHTML);
-                }
-            }
-        }
+    if (authorRole === 'assistant') {
+        // Wait for the streaming to finish for the assistant's response.
+        waitForStreamingToEnd(node).then((content) => {
+            logMessageData(messageId, authorRole, content);
+        });
+    } else {
+        // Handle user messages immediately.
+        const messageContent = node.querySelector('div')?.textContent?.trim() || '';
+        logMessageData(messageId, authorRole, messageContent);
     }
 }
 
-// Retrieves the message content based on the author's role.
-function getMessageContent(node: Element, authorRole: string | null): string {
-    if (authorRole === 'user') {
-        return node.querySelector('div')?.textContent?.trim() || '';
-    } else if (authorRole === 'assistant') {
-        // return node.querySelector('div.markdown')?.innerHTML?.trim() || '';
-        if (assistantTargetNode) {
-            const assistantObserver = new MutationObserver(assistantCallback);
-            assistantObserver.observe(assistantTargetNode, assistantConfig);
+function waitForStreamingToEnd(node: Element): Promise<string> {
+    return new Promise((resolve) => {
+        console.log(`Waiting for streaming to end for message: ${node.getAttribute('data-message-id')}`);
+
+        if (!node.classList.contains('result-streaming')) {
+            console.log('Streaming already finished, resolving immediately');
+            console.log('Node:', node);
+            console.log(node.textContent);
+            console.log(node.classList);
+            resolve(node.textContent?.trim() || '');
+        } else {
+            console.log('Streaming in progress, observing class attribute');
+
+            const observer = new MutationObserver((mutations, obs) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        console.log('Class attribute changed');
+                        console.log('Current classes:', node.classList);
+
+                        if (!node.classList.contains('result-streaming')) {
+                            console.log('Streaming finished, resolving promise');
+                            observer.disconnect();
+                            resolve(node.textContent?.trim() || '');
+                        }
+                    }
+                });
+            });
+
+            observer.observe(node, { attributes: true, attributeFilter: ['class'] });
         }
-    }
-    return '';
+    });
 }
 
-// Logs message data to the console.
 function logMessageData(messageId: string | null, authorRole: string | null, messageContent: string) {
     const messageData = { id: messageId, role: authorRole, content: messageContent };
     console.log(messageData);
