@@ -70,9 +70,6 @@ function waitForStreamingToEnd(node: Element): Promise<string> {
 
         if (!node.classList.contains('result-streaming')) {
             console.log('Streaming already finished, resolving immediately');
-            console.log('Node:', node);
-            console.log(node.textContent);
-            console.log(node.classList);
             resolve(node.textContent?.trim() || '');
         } else {
             console.log('Streaming in progress, observing class attribute');
