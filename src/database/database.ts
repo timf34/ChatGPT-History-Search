@@ -23,14 +23,22 @@ class ChatGPTHistoryDB {
 
             request.onupgradeneeded = (event) => {
                 const db = request.result;
+                console.log('Database upgrade or initialization.');
                 if (!db.objectStoreNames.contains(this.STORE_NAME)) {
-                    const objectStore = db.createObjectStore(this.STORE_NAME, { keyPath: 'key' });
-                    objectStore.createIndex('date', 'date', { unique: false });
+                    db.createObjectStore(this.STORE_NAME, { keyPath: 'key' });
+                    console.log(`Object store '${this.STORE_NAME}' created.`);
                 }
             };
 
-            request.onerror = (event) => reject(request.error);
-            request.onsuccess = (event) => resolve(request.result);
+            request.onerror = (event) => {
+                console.error('Database error:', request.error);
+                reject(request.error);
+            };
+
+            request.onsuccess = (event) => {
+                console.log('Database opened successfully.');
+                resolve(request.result);
+            };
         });
     }
 
@@ -51,7 +59,6 @@ class ChatGPTHistoryDB {
             store.put(conversation);
         }
     }
-
 
 
     async saveConversationTurn(key: string, turn: ConversationTurn) {
