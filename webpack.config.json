@@ -1,0 +1,27 @@
+const path = require('path');
+
+module.exports = {
+  mode: 'development', // Use 'production' for production builds
+  entry: {
+    background: './src/background/background.ts',
+    chatObserver: './src/content/chatObserver.ts',
+    // Add other entry points here if you have more scripts
+  },
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].js',
+  },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
+  },
+  devtool: 'cheap-module-source-map', // Source maps support
+};
