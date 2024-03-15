@@ -9,12 +9,12 @@
     "activeTab"
   ],
   "background": {
-    "service_worker": "dist/background/background.js"
+    "service_worker": "dist/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://chat.openai.com/*"],
-      "js": ["dist/content/chatObserver.js"]
+      "js": ["dist/chatObserver.js"]
     }
   ],
   "action": {

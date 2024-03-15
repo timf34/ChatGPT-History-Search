@@ -1,6 +1,5 @@
 import ChatGPTHistoryDB from '../database/database';
 
-
 console.log("Content script loaded");
 
 interface ElementWithMatch extends Element {
@@ -21,6 +20,18 @@ const observer = new MutationObserver((mutations: MutationRecord[]) => {
         }
     });
 });
+
+async function init() {
+    try {
+        await ChatGPTHistoryDB.openDB();
+        console.log('Database initialized successfully.');
+        startObserving();
+    } catch (error) {
+        console.error('Failed to initialize the database:', error);
+    }
+}
+
+init();
 
 function startObserving() {
     const targetNode = document.querySelector('div.flex.flex-col.text-sm.pb-9');
