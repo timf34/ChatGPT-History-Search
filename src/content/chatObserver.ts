@@ -1,6 +1,26 @@
 import ChatGPTHistoryDB from '../database/database';
 
 console.log("Content script loaded");
+let currentConversationKey = '';
+
+function getConversationKeyFromURL() {
+    const url = window.location.href;
+    const match = url.match(/chat.openai.com\/c\/([a-zA-Z0-9-]+)/);
+    return match ? match[1] : null;
+}
+
+async function initOrUpdateConversationKey() {
+    const conversationKey = getConversationKeyFromURL();
+    if (conversationKey) {
+        currentConversationKey = conversationKey;
+        console.log('Current Conversation Key:', currentConversationKey);
+        // Initialize or update any necessary data with the new conversation key here.
+    } else {
+        console.warn('No conversation key found in URL.');
+    }
+}
+
+initOrUpdateConversationKey();
 
 interface ElementWithMatch extends Element {
     matches(selector: string): boolean;
@@ -108,7 +128,15 @@ function waitForStreamingToEnd(node: Element): Promise<string> {
     });
 }
 
-function logMessageData(messageId: string | null, authorRole: string | null, messageContent: string) {
-    const messageData = { id: messageId, role: authorRole, content: messageContent };
-    console.log(messageData);
+async function logMessageData(messageId: string | null, authorRole: string | null, messageContent: string) {
+    // Use an empty string as a fallback if messageId or authorRole is null
+    const messageData = {
+        id: messageId ?? '', // Fallback to an empty string if messageId is null
+        role: authorRole ?? '', // Fallback to an empty string if authorRole is null
+        content: messageContent,
+    };
+    console.log('Saving message to DB:', messageData);
+    // Use currentConversationKey as the key for the conversation entry
+    await ChatGPTHistoryDB.saveConversationTurn(currentConversationKey, messageData);
 }
+
