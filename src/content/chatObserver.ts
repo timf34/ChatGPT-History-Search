@@ -5,6 +5,7 @@ interface ElementWithMatch extends Element {
     matches(selector: string): boolean;
 }
 
+// Creates an observer instance that looks for new conversation turns (i.e. chat responses from the user or assistant).
 const observer = new MutationObserver((mutations: MutationRecord[]) => {
     mutations.forEach((mutation: MutationRecord) => {
         if (mutation.type === 'childList') {
@@ -54,12 +55,42 @@ function handleMessageNode(node: Element) {
     logMessageData(messageId, authorRole, messageContent);
 }
 
+// Target node: <div class="result-streaming markdown prose w-full break-words dark:prose-invert light">
+// assistantTargetNode = document.querySelector('div.result-streaming.markdown.prose.w-full.break-words.dark\:prose-invert.light');
+const assistantTargetNode = document.querySelector('div.markdown');
+if (!assistantTargetNode) {
+    console.warn("Assistant target node not found.");
+}
+
+const assistantConfig = { attributes: true, childList: false, subtree: false };
+
+function assistantCallback(mutationsList: MutationRecord[], observer: MutationObserver) {
+    // Check if the target node contains "result-streaming" class, if it does wait until it doesn't
+    for (let mutation of mutationsList) {
+        if (mutation.type === 'attributes') {
+            if (assistantTargetNode) {
+                console.log(assistantTargetNode.classList);
+                if (assistantTargetNode.classList.contains('result-streaming')) {
+                    console.log("Assistant is typing...");
+                } else {
+                    console.log("Assistant has stopped typing");
+                    logMessageData(null, 'assistant', assistantTargetNode.innerHTML);
+                }
+            }
+        }
+    }
+}
+
 // Retrieves the message content based on the author's role.
 function getMessageContent(node: Element, authorRole: string | null): string {
     if (authorRole === 'user') {
         return node.querySelector('div')?.textContent?.trim() || '';
     } else if (authorRole === 'assistant') {
-        return node.querySelector('div.markdown')?.innerHTML?.trim() || '';
+        // return node.querySelector('div.markdown')?.innerHTML?.trim() || '';
+        if (assistantTargetNode) {
+            const assistantObserver = new MutationObserver(assistantCallback);
+            assistantObserver.observe(assistantTargetNode, assistantConfig);
+        }
     }
     return '';
 }
